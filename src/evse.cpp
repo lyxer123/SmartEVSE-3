@@ -19,10 +19,10 @@
 #include "time.h"
 
 #include "evse.h"
-#include "glcd.h"
 #include "utils.h"
-#include "OneWire.h"
 #include "modbus.h"
+// #include "glcd.h"
+// #include "OneWire.h"
 
 #include <nvs_flash.h>              // nvs initialisation code (can be removed?)
 
@@ -311,18 +311,18 @@ void BlinkLed(void * parameter) {
         if (BacklightTimer > 1 && BacklightSet != 1) {                      // Enable LCD backlight at max brightness
                                                                             // start only when fully off(0) or when we are dimming the backlight(2)
             LcdPwm = LCD_BRIGHTNESS;
-            ledcWrite(LCD_CHANNEL, LcdPwm);
+            //ledcWrite(LCD_CHANNEL, LcdPwm);
             BacklightSet = 1;                                               // 1: we have set the backlight to max brightness
         } 
         
         if (BacklightTimer == 1 && LcdPwm >= 3) {                           // Last second of Backlight
             LcdPwm -= 3;
-            ledcWrite(LCD_CHANNEL, ease8InOutQuad(LcdPwm));                 // fade out
+            //ledcWrite(LCD_CHANNEL, ease8InOutQuad(LcdPwm));                 // fade out
             BacklightSet = 2;                                               // 2: we are dimming the backlight
         }
                                                                             // Note: could be simplified by removing following code if LCD_BRIGHTNESS is multiple of 3                                                               
         if (BacklightTimer == 0 && BacklightSet) {                          // End of LCD backlight
-            ledcWrite(LCD_CHANNEL, 0);                                      // switch off LED PWM
+            //ledcWrite(LCD_CHANNEL, 0);                                      // switch off LED PWM
             BacklightSet = 0;                                               // 0: backlight fully off
         }
 
@@ -556,7 +556,7 @@ void setState(uint8_t NewState) {
             // fall through
         case STATE_A:                                                           // State A1
             CONTACTOR1_OFF;  
-            CONTACTOR2_OFF;  
+            // CONTACTOR2_OFF;  
             ledcWrite(CP_CHANNEL, 1024);                                        // PWM off,  channel 0, duty cycle 100%
             timerAlarmWrite(timerA, PWM_100, true);                             // Alarm every 1ms, auto reload 
             if (NewState == STATE_A) {
@@ -571,14 +571,14 @@ void setState(uint8_t NewState) {
             break;
         case STATE_B:
             CONTACTOR1_OFF;
-            CONTACTOR2_OFF;
+            // CONTACTOR2_OFF;
             timerAlarmWrite(timerA, PWM_95, false);                             // Enable Timer alarm, set to diode test (95%)
             SetCurrent(ChargeCurrent);                                          // Enable PWM
             break;      
         case STATE_C:                                                           // State C2
             ActivationMode = 255;                                               // Disable ActivationMode
             CONTACTOR1_ON;                                                      // Contactor1 ON
-            CONTACTOR2_ON;                                                      // Contactor2 ON
+            // CONTACTOR2_ON;                                                      // Contactor2 ON
             LCDTimer = 0;
             break;
         case STATE_C1:
@@ -1484,114 +1484,115 @@ void CheckSwitch(void)
     static unsigned long RB2Timer = 0;                                                 // 1500ms
 
     // External switch changed state?
-    if ( (digitalRead(PIN_SW_IN) != RB2last) || RB2low) {
-        // make sure that noise on the input does not switch
-        if (RB2count++ > 5 || RB2low) {
-            RB2last = digitalRead(PIN_SW_IN);
-            if (RB2last == 0) {
-                // Switch input pulled low
-                switch (Switch) {
-                    case 1: // Access Button
-                        setAccess(!Access_bit);                             // Toggle Access bit on/off
-#ifdef LOG_DEBUG_EVSE
-                        Serial.printf("Access: %d\n", Access_bit);
-#endif
-                        break;
-                    case 2: // Access Switch
-                        setAccess(true);
-                        break;
-                    case 3: // Smart-Solar Button or hold button for 1,5 second to STOP charging
-                        if (RB2low == 0) {
-                            RB2low = 1;
-                            RB2Timer = millis();
-                        }
-                        if (RB2low && millis() > RB2Timer + 1500) {
-                            if (State == STATE_C) {
-                                setState(STATE_C1);
-                                if (!TestState) ChargeDelay = 15;           // Keep in State B for 15 seconds, so the Charge cable can be removed.
-                            RB2low = 2;
-                            }
-                        }
-                        break;
-                    case 4: // Smart-Solar Switch
-                        if (Mode == MODE_SOLAR) {
-                            setMode(MODE_SMART);
-                            setSolarStopTimer(0);                           // Also make sure the SolarTimer is disabled.
-                        }
-                        break;
-                    default:
-                        if (State == STATE_C) {                             // Menu option Access is set to Disabled
-                            setState(STATE_C1);
-                            if (!TestState) ChargeDelay = 15;               // Keep in State B for 15 seconds, so the Charge cable can be removed.
-                        }
-                        break;
-                }
+//     if ( (digitalRead( PIN_SW_IN) != RB2last) || RB2low) {
+//         // make sure that noise on the input does not switch
+//         if (RB2count++ > 5 || RB2low) {
+//             RB2last = digitalRead(PIN_SW_IN);
+//             if (RB2last == 0) {
+//                 // Switch input pulled low
+//                 switch (Switch) {
+//                     case 1: // Access Button
+//                         setAccess(!Access_bit);                             // Toggle Access bit on/off
+// #ifdef LOG_DEBUG_EVSE
+//                         Serial.printf("Access: %d\n", Access_bit);
+// #endif
+//                         break;
+//                     case 2: // Access Switch
+//                         setAccess(true);
+//                         break;
+//                     case 3: // Smart-Solar Button or hold button for 1,5 second to STOP charging
+//                         if (RB2low == 0) {
+//                             RB2low = 1;
+//                             RB2Timer = millis();
+//                         }
+//                         if (RB2low && millis() > RB2Timer + 1500) {
+//                             if (State == STATE_C) {
+//                                 setState(STATE_C1);
+//                                 if (!TestState) ChargeDelay = 15;           // Keep in State B for 15 seconds, so the Charge cable can be removed.
+//                             RB2low = 2;
+//                             }
+//                         }
+//                         break;
+//                     case 4: // Smart-Solar Switch
+//                         if (Mode == MODE_SOLAR) {
+//                             setMode(MODE_SMART);
+//                             setSolarStopTimer(0);                           // Also make sure the SolarTimer is disabled.
+//                         }
+//                         break;
+//                     default:
+//                         if (State == STATE_C) {                             // Menu option Access is set to Disabled
+//                             setState(STATE_C1);
+//                             if (!TestState) ChargeDelay = 15;               // Keep in State B for 15 seconds, so the Charge cable can be removed.
+//                         }
+//                         break;
+//                 }
 
-                // Reset RCM error when button is pressed
-                // RCM was tripped, but RCM level is back to normal
-                if (RCmon == 1 && (ErrorFlags & RCM_TRIPPED) && digitalRead(PIN_RCM_FAULT) == LOW) {
-                    // Clear RCM error
-                    ErrorFlags &= ~RCM_TRIPPED;
-                }
-                // Also light up the LCD backlight
-                BacklightTimer = BACKLIGHT;                                 // Backlight ON
+//                 // Reset RCM error when button is pressed
+//                 // RCM was tripped, but RCM level is back to normal
+//                 // if (RCmon == 1 && (ErrorFlags & RCM_TRIPPED) && digitalRead(PIN_RCM_FAULT) == LOW) {
+//                 //     // Clear RCM error
+//                 //     ErrorFlags &= ~RCM_TRIPPED;
+//                 // }
 
-            } else {
-                // Switch input released
-                switch (Switch) {
-                    case 2: // Access Switch
-                        setAccess(false);
-                        break;
-                    case 3: // Smart-Solar Button
-                        if (RB2low != 2) {
-                            if (Mode == MODE_SMART) {
-                                setMode(MODE_SOLAR);
-                            } else if (Mode == MODE_SOLAR) {
-                                setMode(MODE_SMART);
-                            }
-                            ErrorFlags &= ~(NO_SUN | LESS_6A);                   // Clear All errors
-                            ChargeDelay = 0;                                // Clear any Chargedelay
-                            setSolarStopTimer(0);                           // Also make sure the SolarTimer is disabled.
-                            LCDTimer = 0;
-                        }
-                        RB2low = 0;
-                        break;
-                    case 4: // Smart-Solar Switch
-                        if (Mode == MODE_SMART) setMode(MODE_SOLAR);
-                        break;
-                    default:
-                        break;
-                }
-            }
+//                 // Also light up the LCD backlight
+//                 BacklightTimer = BACKLIGHT;                                 // Backlight ON
 
-            RB2count = 0;
-        }
-    } else RB2count = 0;
+//             } else {
+//                 // Switch input released
+//                 switch (Switch) {
+//                     case 2: // Access Switch
+//                         setAccess(false);
+//                         break;
+//                     case 3: // Smart-Solar Button
+//                         if (RB2low != 2) {
+//                             if (Mode == MODE_SMART) {
+//                                 setMode(MODE_SOLAR);
+//                             } else if (Mode == MODE_SOLAR) {
+//                                 setMode(MODE_SMART);
+//                             }
+//                             ErrorFlags &= ~(NO_SUN | LESS_6A);                   // Clear All errors
+//                             ChargeDelay = 0;                                // Clear any Chargedelay
+//                             setSolarStopTimer(0);                           // Also make sure the SolarTimer is disabled.
+//                             LCDTimer = 0;
+//                         }
+//                         RB2low = 0;
+//                         break;
+//                     case 4: // Smart-Solar Switch
+//                         if (Mode == MODE_SMART) setMode(MODE_SOLAR);
+//                         break;
+//                     default:
+//                         break;
+//                 }
+//             }
 
-    // Residual current monitor active, and DC current > 6mA ?
-    if (RCmon == 1 && digitalRead(PIN_RCM_FAULT) == HIGH) {                   
-        delay(1);
-        // check again, to prevent voltage spikes from tripping the RCM detection
-        if (digitalRead(PIN_RCM_FAULT) == HIGH) {                           
-            if (State) setState(STATE_B1);
-            ErrorFlags = RCM_TRIPPED;
-            LCDTimer = 0;                                                   // display the correct error message on the LCD
-        }
-    }
+//             RB2count = 0;
+//         }
+//     } else RB2count = 0;
+
+//     // Residual current monitor active, and DC current > 6mA ?
+//     // if (RCmon == 1 && digitalRead(PIN_RCM_FAULT) == HIGH) {                   
+//     //     delay(1);
+//     //     // check again, to prevent voltage spikes from tripping the RCM detection
+//     //     if (digitalRead(PIN_RCM_FAULT) == HIGH) {                           
+//     //         if (State) setState(STATE_B1);
+//     //         ErrorFlags = RCM_TRIPPED;
+//     //         LCDTimer = 0;                                                   // display the correct error message on the LCD
+//     //     }
+//     // }
 
 
-    // One RFID card can Lock/Unlock the charging socket (like a public charging station)
-    if (RFIDReader == 2) {
-        if (Access_bit == 0) UnlockCable = 1; 
-        else UnlockCable = 0;
-    // The charging socket is unlocked when charging stops.
-    } else {
-        if (State != STATE_C) UnlockCable = 1;
-        else UnlockCable = 0;
-    } 
-    // If the cable is connected to the EV, the cable will be locked.
-   if (State == STATE_B || State == STATE_C) LockCable = 1;
-   else LockCable = 0;
+//     // One RFID card can Lock/Unlock the charging socket (like a public charging station)
+//     if (RFIDReader == 2) {
+//         if (Access_bit == 0) UnlockCable = 1; 
+//         else UnlockCable = 0;
+//     // The charging socket is unlocked when charging stops.
+//     } else {
+//         if (State != STATE_C) UnlockCable = 1;
+//         else UnlockCable = 0;
+//     } 
+//     // If the cable is connected to the EV, the cable will be locked.
+//    if (State == STATE_B || State == STATE_C) LockCable = 1;
+//    else LockCable = 0;
     
 
 }
@@ -1618,25 +1619,29 @@ void EVSEStates(void * parameter) {
         // we have to make sure that this does not interfere by write actions to the LCD.
         // Therefore updating the LCD is also done in this task.
 
-        pinMatrixOutDetach(PIN_LCD_SDO_B3, false, false);       // disconnect MOSI pin
-        pinMode(PIN_LCD_SDO_B3, INPUT);
-        pinMode(PIN_LCD_A0_B2, INPUT);
+        // pinMatrixOutDetach(PIN_LCD_SDO_B3, false, false);       // disconnect MOSI pin
+        // pinMode(PIN_LCD_SDO_B3, INPUT);
+        // pinMode(PIN_LCD_A0_B2, INPUT);
         // sample buttons                                       < o >
-        if (digitalRead(PIN_LCD_SDO_B3)) ButtonState = 4;       // > (right)
-        else ButtonState = 0;
-        if (digitalRead(PIN_LCD_A0_B2)) ButtonState |= 2;       // o (middle)
-        if (digitalRead(PIN_IO0_B1)) ButtonState |= 1;          // < (left)
+        // if (digitalRead(PIN_LCD_SDO_B3)) ButtonState = 4;       // > (right)
+        // else ButtonState = 0;
+        // if (digitalRead(PIN_LCD_A0_B2)) ButtonState |= 2;       // o (middle)
+        // if (digitalRead(PIN_IO0_B1)) ButtonState |= 1;          // < (left)
 
-        pinMode(PIN_LCD_SDO_B3, OUTPUT);
-        pinMatrixOutAttach(PIN_LCD_SDO_B3, VSPID_IN_IDX, false, false); // re-attach MOSI pin
-        pinMode(PIN_LCD_A0_B2, OUTPUT);
+        // pinMode(PIN_LCD_SDO_B3, OUTPUT);
+        // pinMatrixOutAttach(PIN_LCD_SDO_B3, VSPID_IN_IDX, false, false); // re-attach MOSI pin
+        // pinMode(PIN_LCD_A0_B2, OUTPUT);
 
 
         // When one or more button(s) are pressed, we call GLCDMenu
-        if ((ButtonState != 0x07) || (ButtonState != OldButtonState)) GLCDMenu(ButtonState);
+        if ((ButtonState != 0x07) || (ButtonState != OldButtonState)) 
+          //GLCDMenu(ButtonState);
+          ;
 
         // Update/Show Helpmenu
-        if (LCDNav > MENU_ENTER && LCDNav < MENU_EXIT && (ScrollTimer + 5000 < millis() ) && (!SubMenu)) GLCDHelp();
+        if (LCDNav > MENU_ENTER && LCDNav < MENU_EXIT && (ScrollTimer + 5000 < millis() ) && (!SubMenu)) 
+            // GLCDHelp();
+            ;
 
         // Left button pressed, Loadbalancing is Master or Disabled, switch is set to "Sma-Sol B" and Mode is Smart or Solar?
         if (!LCDNav && ButtonState == 0x6 && Mode && !leftbutton && (LoadBl < 2) && Switch == 3) {
@@ -1649,7 +1654,7 @@ void EVSEStates(void * parameter) {
         } else if (leftbutton && ButtonState == 0x7) leftbutton--;
 
         // Check the external switch and RCM sensor
-        CheckSwitch();
+        // CheckSwitch();
 
         // sample the Pilot line
         pilot = Pilot();
@@ -1735,8 +1740,9 @@ void EVSEStates(void * parameter) {
 
                             DiodeCheck = 0;                                     // (local variable)
                             setState(STATE_C);                                  // switch to STATE_C
-                            if (!LCDNav) GLCD();                                // Don't update the LCD if we are navigating the menu
-                                                                                // immediately update LCD (20ms)
+                            if (!LCDNav) 
+                            //GLCD();                                // Don't update the LCD if we are navigating the menu
+                            ;                                                    // immediately update LCD (20ms)
                         }
                         else if (Mode == MODE_SOLAR) {                          // Not enough power:
                             ErrorFlags |= NO_SUN;                               // Not enough solar power
@@ -1770,12 +1776,12 @@ void EVSEStates(void * parameter) {
             if (pilot == PILOT_12V) 
             {                                                                   // Disconnected or connected to EV without PWM
                 setState(STATE_A);                                              // switch to STATE_A
-                GLCD_init();                                                    // Re-init LCD
+                // GLCD_init();                                                    // Re-init LCD
             }
             else if (pilot == PILOT_9V)
             {
                 setState(STATE_B1);                                             // switch to State B1
-                GLCD_init();                                                    // Re-init LCD
+                //GLCD_init();                                                    // Re-init LCD
             }
         }
 
@@ -1789,7 +1795,9 @@ void EVSEStates(void * parameter) {
             DiodeCheck = 0;
             setState(STATE_C);                                                  // switch to STATE_C
                                                                                 // Don't update the LCD if we are navigating the menu
-            if (!LCDNav) GLCD();                                                // immediately update LCD
+            if (!LCDNav) 
+            //GLCD();                                                // immediately update LCD
+            ;
         }
 
         // ############### EVSE State C #################
@@ -1798,12 +1806,12 @@ void EVSEStates(void * parameter) {
         
             if (pilot == PILOT_12V) {                                           // Disconnected ?
                 setState(STATE_A);                                              // switch back to STATE_A
-                GLCD_init();                                                    // Re-init LCD
+                // GLCD_init();                                                    // Re-init LCD
     
             } else if (pilot == PILOT_9V) {
                 setState(STATE_B);                                              // switch back to STATE_B
                 DiodeCheck = 0;
-                GLCD_init();                                                    // Re-init LCD (200ms delay)
+                //GLCD_init();                                                    // Re-init LCD (200ms delay)
                                                                                 // Mark EVSE as inactive (still State B)
             }  
     
@@ -1812,7 +1820,7 @@ void EVSEStates(void * parameter) {
         // update LCD (every 1000ms) when not in the setup menu
         if (LCDupdate) {
             //Serial.printf("States task free ram: %u\n", uxTaskGetStackHighWaterMark( NULL ));
-            GLCD();
+            // GLCD();
             LCDupdate = 0;
         }    
 
@@ -1841,26 +1849,26 @@ uint8_t PollEVNode = NR_EVSES;
 
             // UnlockCable takes precedence over LockCable
             if (UnlockCable) {
-                if (unlocktimer < 6) {                              // 600ms pulse
-                    ACTUATOR_UNLOCK;
-                } else ACTUATOR_OFF;
+                // if (unlocktimer < 6) {                              // 600ms pulse
+                //     ACTUATOR_UNLOCK;
+                // } else ACTUATOR_OFF;
                 if (unlocktimer++ > 7) {
-                    if (digitalRead(PIN_LOCK_IN) == lock1 )         // still locked...
-                    {
-                        if (unlocktimer > 50) unlocktimer = 0;      // try to unlock again in 5 seconds
-                    } else unlocktimer = 7;
+                    // if (digitalRead(PIN_LOCK_IN) == lock1 )         // still locked...
+                    // {
+                    //     if (unlocktimer > 50) unlocktimer = 0;      // try to unlock again in 5 seconds
+                    // } else unlocktimer = 7;
                 }
                 locktimer = 0;
             // Lock Cable    
             } else if (LockCable) { 
-                if (locktimer < 6) {                                // 600ms pulse
-                    ACTUATOR_LOCK;
-                } else ACTUATOR_OFF;
+                // if (locktimer < 6) {                                // 600ms pulse
+                //     ACTUATOR_LOCK;
+                // } else ACTUATOR_OFF;
                 if (locktimer++ > 7) {
-                    if (digitalRead(PIN_LOCK_IN) == lock2 )         // still unlocked...
-                    {
-                        if (locktimer > 50) locktimer = 0;          // try to lock again in 5 seconds
-                    } else locktimer = 7;
+                    // if (digitalRead(PIN_LOCK_IN) == lock2 )         // still unlocked...
+                    // {
+                    //     if (locktimer > 50) locktimer = 0;          // try to lock again in 5 seconds
+                    // } else locktimer = 7;
                 }
                 unlocktimer = 0;
             }
@@ -1989,7 +1997,7 @@ void Timer1S(void * parameter) {
             else {
                 Serial.printf("State C1 timeout!\n");
                 setState(STATE_B1);                                         // switch back to STATE_B1
-                GLCD_init();                                                // Re-init LCD (200ms delay)
+                // GLCD_init();                                                // Re-init LCD (200ms delay)
                 ChargeTimer = 15;
             }
         }
@@ -2003,7 +2011,7 @@ void Timer1S(void * parameter) {
 
 
         // Check if there is a RFID card in front of the reader
-        CheckRFID();
+        // CheckRFID();
 
                  
         // When Solar Charging, once the current drops to MINcurrent a timer is started.
@@ -2495,7 +2503,7 @@ void validate_settings(void) {
     else if (Lock == 2) { lock1 = HIGH; lock2 = LOW; }
     // Erase all RFID cards from ram + eeprom if set to EraseAll
     if (RFIDReader == 5) {
-       DeleteAllRFID();
+    //    DeleteAllRFID();
     }
 
     // Update master node config
@@ -2886,25 +2894,27 @@ void SetupNetworkTask(void * parameter) {
 
 void setup() {
 
-    pinMode(PIN_CP_OUT, OUTPUT);            // CP output
-    pinMode(PIN_SW_IN, INPUT);              // SW Switch input
+    // pinMode(PIN_CP_OUT, OUTPUT);            // CP output
+    // pinMode(PIN_SW_IN, INPUT);              // SW Switch input
+
     pinMode(PIN_SSR, OUTPUT);               // SSR1 output
-    pinMode(PIN_SSR2, OUTPUT);              // SSR2 output
-    pinMode(PIN_RCM_FAULT, INPUT_PULLUP);   
+    // pinMode(PIN_SSR2, OUTPUT);              // SSR2 output
 
-    pinMode(PIN_LCD_LED, OUTPUT);           // LCD backlight
-    pinMode(PIN_LCD_RST, OUTPUT);           // LCD reset
-    pinMode(PIN_IO0_B1, INPUT);             // < button
-    pinMode(PIN_LCD_A0_B2, OUTPUT);         // o Select button + A0 LCD
-    pinMode(PIN_LCD_SDO_B3, OUTPUT);        // > button + SDA/MOSI pin
+    // pinMode(PIN_RCM_FAULT, INPUT_PULLUP);   
 
-    pinMode(PIN_LOCK_IN, INPUT);            // Locking Solenoid input
+    // pinMode(PIN_LCD_LED, OUTPUT);           // LCD backlight
+    // pinMode(PIN_LCD_RST, OUTPUT);           // LCD reset
+    // pinMode(PIN_IO0_B1, INPUT);             // < button
+    // pinMode(PIN_LCD_A0_B2, OUTPUT);         // o Select button + A0 LCD
+    // pinMode(PIN_LCD_SDO_B3, OUTPUT);        // > button + SDA/MOSI pin
+
+    // pinMode(PIN_LOCK_IN, INPUT);            // Locking Solenoid input
     pinMode(PIN_LEDR, OUTPUT);              // Red LED output
     pinMode(PIN_LEDG, OUTPUT);              // Green LED output
     pinMode(PIN_LEDB, OUTPUT);              // Blue LED output
-    pinMode(PIN_ACTA, OUTPUT);              // Actuator Driver output R
-    pinMode(PIN_ACTB, OUTPUT);              // Actuator Driver output W
-    pinMode(PIN_CPOFF, OUTPUT);             // Disable CP output (active high)
+    // pinMode(PIN_ACTA, OUTPUT);              // Actuator Driver output R
+    // pinMode(PIN_ACTB, OUTPUT);              // Actuator Driver output W
+    // pinMode(PIN_CPOFF, OUTPUT);             // Disable CP output (active high)
     pinMode(PIN_RS485_RX, INPUT);
     pinMode(PIN_RS485_TX, OUTPUT);
     pinMode(PIN_RS485_DIR, OUTPUT);
@@ -2912,12 +2922,13 @@ void setup() {
     digitalWrite(PIN_LEDR, LOW);
     digitalWrite(PIN_LEDG, LOW);
     digitalWrite(PIN_LEDB, LOW);
-    digitalWrite(PIN_ACTA, LOW);
-    digitalWrite(PIN_ACTB, LOW);        
-    digitalWrite(PIN_CPOFF, LOW);           // CP signal ACTIVE
+    // digitalWrite(PIN_ACTA, LOW);
+    // digitalWrite(PIN_ACTB, LOW);        
+    // digitalWrite(PIN_CPOFF, LOW);           // CP signal ACTIVE
     digitalWrite(PIN_SSR, LOW);             // SSR1 OFF
-    digitalWrite(PIN_SSR2, LOW);            // SSR2 OFF
-    digitalWrite(PIN_LCD_LED, HIGH);        // LCD Backlight ON
+
+    // digitalWrite(PIN_SSR2, LOW);            // SSR2 OFF
+    // digitalWrite(PIN_LCD_LED, HIGH);        // LCD Backlight ON
 
  
     // Uart 0 debug/program port
@@ -2927,11 +2938,14 @@ void setup() {
 
     // configure SPI connection to LCD
     // only the SPI_SCK and SPI_MOSI pins are used
-    SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, SPI_SS);
+
+    // SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, SPI_SS);
+
     // the ST7567's max SPI Clock frequency is 20Mhz at 3.3V/25C
     // We choose 10Mhz here, to reserve some room for error.
     // SPI mode is MODE3 (Idle = HIGH, clock in on rising edge)
-    SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE3));
+
+    // SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE3));
     
 
     // The CP (control pilot) output is a fixed 1khz square-wave (+6..9v / -12v).
@@ -2972,27 +2986,28 @@ void setup() {
     ledcSetup(RED_CHANNEL, 5000, 8);            // R channel 2, 5kHz, 8 bit
     ledcSetup(GREEN_CHANNEL, 5000, 8);          // G channel 3, 5kHz, 8 bit
     ledcSetup(BLUE_CHANNEL, 5000, 8);           // B channel 4, 5kHz, 8 bit
-    ledcSetup(LCD_CHANNEL, 5000, 8);            // LCD channel 5, 5kHz, 8 bit
+    //ledcSetup(LCD_CHANNEL, 5000, 8);            // LCD channel 5, 5kHz, 8 bit
 
     // attach the channels to the GPIO to be controlled
-    ledcAttachPin(PIN_CP_OUT, CP_CHANNEL);      
+    // ledcAttachPin(PIN_CP_OUT, CP_CHANNEL);      
     //pinMode(PIN_CP_OUT, OUTPUT);                // Re-init the pin to output, required in order for attachInterrupt to work (2.0.2)
                                                 // not required/working on master branch..
                                                 // see https://github.com/espressif/arduino-esp32/issues/6140
     ledcAttachPin(PIN_LEDR, RED_CHANNEL);
     ledcAttachPin(PIN_LEDG, GREEN_CHANNEL);
     ledcAttachPin(PIN_LEDB, BLUE_CHANNEL);
-    ledcAttachPin(PIN_LCD_LED, LCD_CHANNEL);
+    // ledcAttachPin(PIN_LCD_LED, LCD_CHANNEL);
 
     ledcWrite(CP_CHANNEL, 1024);                // channel 0, duty cycle 100%
     ledcWrite(RED_CHANNEL, 255);
     ledcWrite(GREEN_CHANNEL, 0);
     ledcWrite(BLUE_CHANNEL, 255);
-    ledcWrite(LCD_CHANNEL, 0);
+
+    //ledcWrite(LCD_CHANNEL, 0);
 
     // Setup PIN interrupt on rising edge
     // the timer interrupt will be reset in the ISR.
-    attachInterrupt(PIN_CP_OUT, onCPpulse, RISING);   
+    // attachInterrupt(PIN_CP_OUT, onCPpulse, RISING);   
    
     // Uart 1 is used for Modbus @ 9600 8N1
     Serial1.begin(MODBUS_BAUDRATE, SERIAL_8N1, PIN_RS485_RX, PIN_RS485_TX);
@@ -3020,7 +3035,7 @@ void setup() {
 
    // Read all settings from non volatile memory
     read_settings(true);                                                        // initialize with default data when starting for the first time
-    ReadRFIDlist();                                                             // Read all stored RFID's from storage
+    //ReadRFIDlist();                                                             // Read all stored RFID's from storage
 
     // We might need some sort of authentication in the future.
     // SmartEVSE v3 have programmed ECDSA-256 keys stored in nvs
@@ -3099,7 +3114,7 @@ void setup() {
     ConfigureModbusMode(255);
   
     BacklightTimer = BACKLIGHT;
-    GLCD_init();
+    // GLCD_init();
           
 }
 

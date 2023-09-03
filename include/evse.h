@@ -1,30 +1,12 @@
 /*
 ;    Project: Smart EVSE v3
 ;
-;
-; Permission is hereby granted, free of charge, to any person obtaining a copy
-; of this software and associated documentation files (the "Software"), to deal
-; in the Software without restriction, including without limitation the rights
-; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-; copies of the Software, and to permit persons to whom the Software is
-; furnished to do so, subject to the following conditions:
-;
-; The above copyright notice and this permission notice shall be included in
-; all copies or substantial portions of the Software.
-;
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-; THE SOFTWARE.
  */
 
 #ifndef __EVSE_MAIN
 #define __EVSE_MAIN
 
-
+//debug信息数据
 #define LOG_DEBUG 3                                                             // Debug messages including measurement data
 #define LOG_INFO 2                                                              // Information messages without measurement data
 #define LOG_WARN 1                                                              // Warning or error messages
@@ -36,47 +18,57 @@
 #define VERSION "3.0.1"         	                                            // SmartEVSE software version
 #define TRANSFORMER_COMP 100   
 
-
 // Pin definitions left side ESP32
-#define PIN_TEMP 36
-#define PIN_CP_IN 39
-#define PIN_PP_IN 34
-#define PIN_LOCK_IN 35
-#define PIN_SSR 32
-#define PIN_LCD_SDO_B3 33                                                       // = SPI_MOSI
-#define PIN_LCD_A0_B2 25
-#define PIN_LCD_CLK 26                                                          // = SPI_SCK
-#define PIN_SSR2 27
-#define PIN_LCD_LED 14
-#define PIN_LEDB 12
-#define PIN_RCM_FAULT 13
+#define PIN_TEMP 16                                         //DS18b20 GPIO16，lyx
+
+#define PIN_PP_IN 39                                        //GPIO39,VN引脚，lyx
+#define PIN_CP_IN 36                                        //GPIO36,VP引脚，lyx
+
+// #define PIN_LOCK_IN 35                                   //停用
+
+#define PIN_SSR 26                                          //GPIO26,继电器引脚，lyx
+// #define PIN_SSR2 27                                      //停用本设计，这个是smartevse-3版本
+
+// #define PIN_LCD_SDO_B3 33                                // = SPI_MOSI
+// #define PIN_LCD_A0_B2 25
+// #define PIN_LCD_CLK 26                                   // = SPI_SCK
+// #define PIN_LCD_LED 14
+// #define PIN_LCD_RST 5
+
+// #define PIN_RCM_FAULT 13                                 //停用,lyx
 
 // Pin definitions right side ESP32
-#define PIN_RS485_RX 23
-#define PIN_RS485_DIR 22
+#define PIN_RS485_RX 32                                     //485-rx,gpio32,lyx
+#define PIN_RS485_DIR 33                                    //485-dir,gpio33,lyx
+#define PIN_RS485_TX 25                                     //485-tx gpio25,lyx
 //#define PIN_RXD 
 //#define PIN_TXD
-#define PIN_RS485_TX 21
-#define PIN_CP_OUT 19
-#define PIN_ACTB 18
-#define PIN_LCD_RST 5
-#define PIN_ACTA 17
-#define PIN_SW_IN 16
-#define PIN_LEDG 4
-#define PIN_IO0_B1 0
-#define PIN_LEDR 2
-#define PIN_CPOFF 15
 
-#define SPI_MOSI 33                                                             // SPI connections to LCD
-#define SPI_MISO -1
-#define SPI_SCK 26
-#define SPI_SS -1
+// #define PIN_CP_OUT 19
+// #define PIN_CPOFF 15
+
+// #define PIN_ACTB 18
+// #define PIN_ACTA 17
+
+// #define PIN_SW_IN 16
+
+// #define PIN_IO0_B1 0
+
+#define PIN_LEDG 4
+#define PIN_LEDR 2
+#define PIN_LEDB 12
+
+
+// #define SPI_MOSI 33                                                             // SPI connections to LCD
+// #define SPI_MISO -1
+// #define SPI_SCK 26
+// #define SPI_SS -1
 
 #define CP_CHANNEL 0
 #define RED_CHANNEL 2                                                           // PWM channel 2 (0 and 1 are used by CP signal)
 #define GREEN_CHANNEL 3
 #define BLUE_CHANNEL 4
-#define LCD_CHANNEL 5                                                           // LED Backlight LCD
+// #define LCD_CHANNEL 5                                                           // LED Backlight LCD
 
 #define PWM_5 50                                                                // 5% of PWM
 #define PWM_95 950                                                              // 95% of PWM
@@ -177,21 +169,21 @@
 #define CONTACTOR1_ON digitalWrite(PIN_SSR, HIGH);
 #define CONTACTOR1_OFF digitalWrite(PIN_SSR, LOW);
 
-#define CONTACTOR2_ON digitalWrite(PIN_SSR2, HIGH);
-#define CONTACTOR2_OFF digitalWrite(PIN_SSR2, LOW);
+// #define CONTACTOR2_ON digitalWrite(PIN_SSR2, HIGH);
+// #define CONTACTOR2_OFF digitalWrite(PIN_SSR2, LOW);
 
-#define BACKLIGHT_ON digitalWrite(PIN_LCD_LED, HIGH);
-#define BACKLIGHT_OFF digitalWrite(PIN_LCD_LED, LOW);
+// #define BACKLIGHT_ON digitalWrite(PIN_LCD_LED, HIGH);
+// #define BACKLIGHT_OFF digitalWrite(PIN_LCD_LED, LOW);
 
-#define ACTUATOR_LOCK { digitalWrite(PIN_ACTB, HIGH); digitalWrite(PIN_ACTA, LOW); }
-#define ACTUATOR_UNLOCK { digitalWrite(PIN_ACTB, LOW); digitalWrite(PIN_ACTA, HIGH); }
-#define ACTUATOR_OFF { digitalWrite(PIN_ACTB, HIGH); digitalWrite(PIN_ACTA, HIGH); }
+// #define ACTUATOR_LOCK { digitalWrite(PIN_ACTB, HIGH); digitalWrite(PIN_ACTA, LOW); }
+// #define ACTUATOR_UNLOCK { digitalWrite(PIN_ACTB, LOW); digitalWrite(PIN_ACTA, HIGH); }
+// #define ACTUATOR_OFF { digitalWrite(PIN_ACTB, HIGH); digitalWrite(PIN_ACTA, HIGH); }
 
 #define ONEWIRE_LOW { digitalWrite(PIN_SW_IN, LOW); pinMode(PIN_SW_IN, OUTPUT); }   // SW set to 0, set to output (driven low)
 #define ONEWIRE_HIGH { digitalWrite(PIN_SW_IN, HIGH); pinMode(PIN_SW_IN, OUTPUT); } // SW set to 1, set to output (driven high)
 #define ONEWIRE_FLOATHIGH pinMode(PIN_SW_IN, INPUT_PULLUP );                        // SW input (floating high)
 
-#define RCMFAULT digitalRead(PIN_RCM_FAULT)
+// #define RCMFAULT digitalRead(PIN_RCM_FAULT)
 
 
 #define MODBUS_INVALID 0
